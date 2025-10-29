@@ -8,6 +8,7 @@ from core.embeddings import EmbeddingCache
 
 from core.llm import LLMManager
 from config.settings import settings
+from config.strings import strings
 from utils.logger import logger
 
 class RAGEngine:
@@ -90,7 +91,7 @@ class RAGEngine:
         """Generate answer from context"""
         if not context:
             return {
-                "answer": "מצטער, אין לי מידע על זה במאגר הידע שלי. 🤷‍♂️",
+                "answer": strings.RAG_NO_CONTEXT,
                 "confidence": 0.0,
                 "status": "no_context",
                 "sources_used": 0
@@ -98,7 +99,7 @@ class RAGEngine:
         
         # Build context
         context_text = "\n\n".join([
-            f"מקור {i+1}:\n{doc['content']}"
+            strings.CONTEXT_SOURCE.format(index=i+1, content=doc['content'])
             for i, doc in enumerate(context)
         ])
         
@@ -107,15 +108,10 @@ class RAGEngine:
         confidence = max(0, min(1, 1 - (avg_score / 2)))
         
         # Generate answer
-        prompt = f"""אתה עוזר שירות לקוחות. ענה על שאלת הלקוח בהתבסס **רק** על ההקשר הבא.
-אם התשובה לא נמצאת בהקשר, אמור שאין לך את המידע הזה.
-
-הקשר:
-{context_text}
-
-שאלת לקוח: {query}
-
-תשובה (בעברית, ידידותית):"""
+        prompt = strings.RAG_PROMPT_TEMPLATE.format(
+            context_text=context_text,
+            query=query
+        )
         
         try:
             answer = await self.llm_manager.generate(prompt)
@@ -123,13 +119,13 @@ class RAGEngine:
             # Determine status
             if confidence >= settings.CONFIDENCE_HIGH:
                 status = "high_confidence"
-                emoji = "✅"
+                emoji = strings.EMOJI_HIGH_CONFIDENCE
             elif confidence >= settings.CONFIDENCE_MEDIUM:
                 status = "medium_confidence"
-                emoji = "⚠️"
+                emoji = strings.EMOJI_MEDIUM_CONFIDENCE
             else:
                 status = "low_confidence"
-                emoji = "❓"
+                emoji = strings.EMOJI_LOW_CONFIDENCE
             
             return {
                 "answer": f"{emoji} {answer}",
@@ -141,7 +137,7 @@ class RAGEngine:
         except Exception as e:
             logger.error(f"Answer generation error: {e}", exc_info=True)
             return {
-                "answer": "מצטער, הייתה בעיה בעיבוד השאלה. נסה שוב.",
+                "answer": strings.RAG_ERROR,
                 "confidence": 0.0,
                 "status": "error",
                 "sources_used": 0
