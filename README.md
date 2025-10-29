@@ -1,37 +1,61 @@
+Telegram Customer Support Agent
+(RAG + LangChain + OpenAI, MVP demo)
 
-# Demo Telegram Customer Support Agent (RAG + LangChain + OpenAI)
+Minimal MVP to demonstrate RAG retrieval, confidence scoring, and multi-source KB search via Telegram bot.
+Designed for code review & onboarding (Windsor spec compliant).
 
-**Minimal MVP to show RAG, confidence scoring and multi-source KB search with a Telegram bot.**
-
-## 📦 Project Structure
-
+📦 Project Structure
+text
 demo/
 ├── main.py
+├── integrations/
+│   └── telegram_bot.py
+├── agents/
+│   └── support_agent.py
+├── handlers/
+│   └── order_handler.py
 ├── knowledge_base.json
 ├── requirements.txt
 ├── .env
 ├── README.md
 ├── .gitignore
 └── spec.yml
+🚀 Quick Start
+Clone repo:
+git clone <REPO_URL>
 
-## 🚀 Quick Start
+Install dependencies:
+pip install -r requirements.txt
 
-1. Clone repo: `git clone ...`
-2. Install: `pip install -r requirements.txt`
-3. Add secrets to `.env`
-4. Launch with: `python main.py`
+Add secrets to .env (Telegram token, OpenAI key, etc)
 
-## Features
+Run the agent:
+python main.py
 
-- Telegram bot responding in Hebrew
-- RAG search over chunked knowledge base (JSON)
-- Confidence scoring (high/med/low)
-- Source citation and explainability
-- Easy to edit knowledge base, add more sources
-- Ready to expand: add WhatsApp, multi-language, admin approval, etc.
+Features
+Telegram bot (Hebrew customer support)
 
-**This is MVP - code ready for Windsor spec onboarding.**
+RAG retrieval on chunked knowledge base (JSON)
 
-## windsor_ai.spec (for CI/CD, Docker or any pipeline)
+Per-user context and enhanced order handling (Claude-style, with state)
 
-See `spec.yml` for Windsor/CI config example.
+Confidence scoring (high/medium/low) with auto/manual reply routing
+
+Source citation and explainability
+
+Easy to edit knowledge base and expand with new sources
+
+Extensible system: ready for WhatsApp, Instagram, multi-language, admin approval, etc.
+
+Code Review
+PR is for review only — please leave comments, suggestions, or improvement ideas.
+No direct changes in the codebase at this stage.
+Focus on architecture, error handling, extensibility.
+
+Spec / Windsor CI
+See spec.yml for Windsor/CI/CD and deployment pipeline config.
+
+Contact / Issues
+Open GitHub Issues or PR comments for review feedback and questions.
+
+Ready for production code review & onboarding.
