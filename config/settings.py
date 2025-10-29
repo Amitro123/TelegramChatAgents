@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from typing import Optional
+from typing import Optional, List
 
 class Settings(BaseSettings):
     """Application settings"""
@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     CHUNK_OVERLAP: int = 50
     MAX_RETRIEVAL_RESULTS: int = 3
     LLM_CACHE_SIZE: int = 500
+    
+    # Admin Settings
+    ADMIN_IDS: List[str] = ["YOUR_TELEGRAM_ID"]
     
     # Confidence Thresholds
     CONFIDENCE_HIGH: float = 0.8

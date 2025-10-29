@@ -14,7 +14,9 @@ import time
 
 from agents.support_agent import SupportAgent
 from config.settings import settings
+from config.strings import strings
 from utils.logger import logger
+
 
 class TelegramBot:
     """Telegram bot integration"""
@@ -48,36 +50,18 @@ class TelegramBot:
         )
 
     async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await update.message.reply_text(
-            "👋 שלום! אני בוט שירות לקוחות חכם.\n\n"
-            "אני כאן כדי לענות על שאלות שלך.\n"
-            "פשוט שלח לי שאלה! 💬\n\n"
-            "Commands:\n"
-            "/help - עזרה\n"
-            "/reset - אפס שיחה\n"
-            "/stats - סטטיסטיקות"
-        )
+        await update.message.reply_text(strings.START_MESSAGE)
 
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await update.message.reply_text(
-            "🤖 איך אני עובד?\n\n"
-            "1️⃣ אתה שולח שאלה\n"
-            "2️⃣ אני מחפש במאגר הידע\n"
-            "3️⃣ אני מייצר תשובה מדויקת\n\n"
-            "✅ = ביטחון גבוה\n"
-            "⚠️ = ביטחון בינוני\n"
-            "❓ = ביטחון נמוך"
-        )
+        await update.message.reply_text(strings.HELP_MESSAGE)
 
     async def reset_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = str(update.effective_user.id)
         self.agent.context_handler.clear_context(user_id)
-        await update.message.reply_text("🔄 השיחה אופסה!")
+        await update.message.reply_text(strings.RESET_MESSAGE)
 
     async def bye_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await update.message.reply_text(
-            "🛑 הבוט עומד להיסגר. תודה שהשתמשת בשירות! האם יש משהו נוסף שאוכל לעזור לפני הסיום?"
-        )
+        await update.message.reply_text(strings.BYE_MESSAGE)
 
     async def stats_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = str(update.effective_user.id)
@@ -90,20 +74,16 @@ class TelegramBot:
             if cache_stats['hits'] + cache_stats['misses'] > 0 else 0
         )
 
-        stats_text = f"""📊 *סטטיסטיקות*
-
-            👤 User ID: `{user_id}`
-            💬 Conversation: {'✅ Active' if has_context else '❌ None'}
-            🤖 Model: {settings.LLM_MODEL}
-
-            💾 Cache Stats:
-            • Hit Rate: {cache_hit_rate:.1f}%
-            • Hits: {cache_stats['hits']}
-            • Misses: {cache_stats['misses']}
-            • Size: {cache_stats['size']}/{cache_stats['max_size']}
-
-            _Cache helps reduce API costs!_
-            """
+        stats_text = strings.STATS_TEMPLATE.format(
+            user_id=user_id,
+            conversation_status=strings.CONVERSATION_ACTIVE if has_context else strings.CONVERSATION_NONE,
+            model=settings.LLM_MODEL,
+            hit_rate=cache_hit_rate,
+            hits=cache_stats['hits'],
+            misses=cache_stats['misses'],
+            size=cache_stats['size'],
+            max_size=cache_stats['max_size']
+        )
         await update.message.reply_text(stats_text, parse_mode="Markdown")
 
     async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -131,21 +111,17 @@ class TelegramBot:
             response = result["answer"]
             if result["status"] != "order_handled":
                 confidence_pct = int(result["confidence"] * 100)
-                response += f"\n\n_Confidence: {confidence_pct}%_"
+                response += strings.CONFIDENCE_SUFFIX.format(confidence=confidence_pct)
 
             await update.message.reply_text(response, parse_mode="Markdown")
 
         except Exception as e:
             logger.error(f"Critical error in handle_message for user {user_id}: {e}", exc_info=True)
             try:
-                await update.message.reply_text(
-                    "😔 מצטער, נתקלתי בבעיה טכנית.\n"
-                    "הצוות קיבל התראה ועובד על פתרון.\n\n"
-                    "בינתיים:\n"
-                    "📧 support@company.com\n"
-                    "📞 03-1234567\n\n"
-                    f"קוד שגיאה: ERR-{int(time.time())}"
+                error_message = strings.ERROR_TECHNICAL.format(
+                    error_code=int(time.time())
                 )
+                await update.message.reply_text(error_message)
             except Exception as send_error:
                 logger.error(f"Failed to send error message to user: {send_error}")
             pass
@@ -153,41 +129,36 @@ class TelegramBot:
     async def cache_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = str(update.effective_user.id)
 
-        ADMIN_IDS = ["YOUR_TELEGRAM_ID"]  # Add your ID here
-
-        if user_id not in ADMIN_IDS:
-            await update.message.reply_text("⛔ Admin only command")
+        if user_id not in settings.ADMIN_IDS:
+            await update.message.reply_text(strings.ADMIN_ONLY)
             return
 
         cache_stats = self.agent.rag.embedding_cache.get_stats()
-
-        cache_info = f"""💾 *Cache Management*
-
-    Current Stats:
-    • Total Hits: {cache_stats['hits']}
-    • Total Misses: {cache_stats['misses']}
-    • Cache Size: {cache_stats['size']}/{cache_stats['max_size']}
-    • Hit Rate: {cache_stats['hits'] / (cache_stats['hits'] + cache_stats['misses']) * 100:.1f}%
-
-    Cost Savings:
-    • API Calls Saved: {cache_stats['hits']}
-    • Estimated Savings: ${cache_stats['hits'] * 0.0001:.2f}
-
-    Use /clearcache to clear cache
-    """
+        hit_rate = (
+            cache_stats['hits'] / (cache_stats['hits'] + cache_stats['misses']) * 100
+            if cache_stats['hits'] + cache_stats['misses'] > 0 else 0
+        )
+        
+        cache_info = strings.CACHE_INFO_TEMPLATE.format(
+            hits=cache_stats['hits'],
+            misses=cache_stats['misses'],
+            size=cache_stats['size'],
+            max_size=cache_stats['max_size'],
+            hit_rate=hit_rate,
+            savings=cache_stats['hits'] * 0.0001
+        )
 
         await update.message.reply_text(cache_info, parse_mode="Markdown")
 
     async def clearcache_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = str(update.effective_user.id)
-        ADMIN_IDS = ["YOUR_TELEGRAM_ID"]
 
-        if user_id not in ADMIN_IDS:
-            await update.message.reply_text("⛔ Admin only command")
+        if user_id not in settings.ADMIN_IDS:
+            await update.message.reply_text(strings.ADMIN_ONLY)
             return
 
         self.agent.rag.embedding_cache.clear_cache()
-        await update.message.reply_text("🗑️ Cache cleared successfully!")
+        await update.message.reply_text(strings.CACHE_CLEARED)
 
     def run(self):
         logger.info("🚀 Starting Telegram bot...")
