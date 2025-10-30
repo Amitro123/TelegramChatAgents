@@ -1,7 +1,14 @@
-from integrations.telegram_bot import TelegramBot
-from utils.logger import logger
-from config.settings import settings
 import sys
+from pathlib import Path
+
+# Add src directory to Python path
+src_path = Path(__file__).parent / "src"
+if str(src_path) not in sys.path:
+    sys.path.insert(0, str(src_path))
+
+from telegram_agent.infrastructure.telegram.telegram_bot import TelegramBot
+from telegram_agent.infrastructure.utils.logger import logger
+from telegram_agent.config.settings import settings
 
 def main():
     """Enhanced main with error handling"""

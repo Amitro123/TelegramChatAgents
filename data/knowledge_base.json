@@ -42,6 +42,15 @@
       "category": "orders",
       "topic": "tracking"
     }
+  },
+  {
+    "order_id": "13354",
+    "content": "סטטוס הזמנה מס׳ 13354: נשלחה ב-27/10/2025 ותגיע אליך עד 2.11. מספר מעקב: IL-13354-2025. הזמנה כוללת: 2 פריטים. סטטוס נוכחי: בדרך אליך 📦",
+    "metadata": {
+      "category": "order",
+      "topic": "status",
+      "customer_id": "278343423"
+    }
   }
 ]
 
